@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>MathBattle Arena</title>
+    <title>MathBattle span-x-4title>
     
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -185,7 +185,7 @@
     <div id="app-container" class="min-h-screen flex-col main-page">
         <!-- Header -->
         <header class="flex items-center justify-between p-4 sticky top-0 glass-header z-10">
-            <h1 class="text-xl font-bold flex items-center gap-2 text-neon"><span class="text-2xl drop-shadow-md">🦁</span> Reward Zoo</h1>
+            <h1 class="text-xl font-bold flex items-center gap-2 text-neon"><span class="text-2xl drop-shadow-md">⚔️</span>MathBattle Arena</h1>
             <div class="flex items-center space-x-4">
                 <div id="notification-bell" class="relative cursor-pointer transition p-2 rounded-full hover:bg-white/10">
                     <i data-lucide="bell" class="w-5 h-5"></i>
@@ -384,14 +384,14 @@
     <script type="module">
         // Firebase Config
         const firebaseConfig = {
-  apiKey: "AIzaSyAcTkgCu_aG5A51CNr2SAbtzGJN1GGsW40",
-  authDomain: "mathbattle-arena.firebaseapp.com",
-  databaseURL: "https://mathbattle-arena-default-rtdb.firebaseio.com",
-  projectId: "mathbattle-arena",
-  storageBucket: "mathbattle-arena.firebasestorage.app",
-  messagingSenderId: "681606906527",
-  appId: "1:681606906527:web:6f887687b0b196904d58aa"
-};
+            apiKey: "AIzaSyDJWJN4y9UHUVi7YL41RfluRyj_ovILeUM",
+            authDomain: "reward-zoo-61000.firebaseapp.com",
+            databaseURL: "https://reward-zoo-61000-default-rtdb.firebaseio.com",
+            projectId: "reward-zoo-61000",
+            storageBucket: "reward-zoo-61000.firebasestorage.app",
+            messagingSenderId: "105510698749",
+            appId: "1:105510698749:web:69ff11ae5439ce76f2c894"
+        };
         
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
@@ -418,11 +418,13 @@
         };
 
         window.onload = () => {
+            // SAFE TELEGRAM CHECK (Fixes Black Screen Crash)
             if (window.Telegram && window.Telegram.WebApp) {
                 const tg = window.Telegram.WebApp;
                 tg.expand();
                 tg.ready();
             }
+            
             lucide.createIcons();
             setupEventListeners();
             showMainPage('auth-section');
@@ -437,6 +439,15 @@
                     await fetchAppConfig();
                     await fetchUserData();
                     if (userData && userData.isBlocked) { showAlert("Your account has been blocked by the admin."); await signOut(auth); return; }
+                    
+                    // --- AUTO REFERRAL CHECK AFTER SUCCESSFUL LOGIN ---
+                    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe) {
+                        const startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
+                        if (startParam && !userData.referredBy && startParam !== userData.referralCode) {
+                            await autoApplyReferral(startParam);
+                        }
+                    }
+
                     await checkNewNotifications();
                     updateUI();
                     startCooldownTimers();
@@ -451,23 +462,36 @@
             }
         }
 
+        async function autoApplyReferral(code) {
+            const bonus = appConfig.referralBonus || 100;
+            try {
+                const snap = await getDocs(query(collection(db, "users"), where("referralCode", "==", code)));
+                if (!snap.empty) {
+                    const refDoc = snap.docs[0];
+                    await updateDoc(doc(db, "users", refDoc.id), { balance: increment(bonus) });
+                    await updateDoc(doc(db, "users", currentUser.uid), { balance: increment(bonus), referredBy: code });
+                    userData.balance += bonus; 
+                    userData.referredBy = code;
+                    updateUI();
+                    showAlert(`🎉 You received ${bonus} coins as sign-up bonus from the invite link!`);
+                }
+            } catch(e) { console.error("Auto Refer Error", e); }
+        }
+
         async function fetchAppConfig() {
             const configRef = doc(db, "config", "main");
             try {
                 const snap = await getDoc(configRef);
                 const data = snap.exists() ? snap.data() : {};
-                // Admin controlled settings with default fallbacks
                 appConfig = {
                     minWithdrawal: data.minWithdrawal || 5000, 
                     paymentMethods: data.paymentMethods || ["UPI", "Paytm"], 
                     coinValueCoins: data.coinValueCoins || 1000, 
                     coinValueInr: data.coinValueInr || 10,
-                    
-                    // Controlled by Admin (COOLDOWNS IN SECONDS)
                     dailyAdLimit: data.dailyAdLimit || 10,
                     dailyMathLimit: data.dailyMathLimit || 10,
-                    adCooldown: data.adCooldown || 60, // SECONDS
-                    mathCooldown: data.mathCooldown || 60, // SECONDS
+                    adCooldown: data.adCooldown || 60, 
+                    mathCooldown: data.mathCooldown || 60, 
                     checkinReward: data.checkinReward || 50,
                     adReward: data.adReward || 50,
                     mathReward: data.mathReward || 10,
@@ -486,11 +510,9 @@
                 userData = userSnap.data();
                 let updatesNeeded = false; let updateData = {};
                 
-                // Reset daily limits based on date
                 if (userData.lastAdWatchDate !== todayStr) { updateData.dailyAdCount = 0; updateData.lastAdWatchDate = todayStr; userData.dailyAdCount = 0; userData.lastAdWatchDate = todayStr; updatesNeeded = true; }
                 if (userData.lastMathDate !== todayStr) { updateData.dailyMathCount = 0; updateData.lastMathDate = todayStr; userData.dailyMathCount = 0; userData.lastMathDate = todayStr; updatesNeeded = true; }
                 
-                // Initialize timestamp fields if missing
                 if (typeof userData.lastMathTime === 'undefined') { updateData.lastMathTime = 0; userData.lastMathTime = 0; updatesNeeded = true; }
                 if (typeof userData.lastAdTime === 'undefined') { updateData.lastAdTime = 0; userData.lastAdTime = 0; updatesNeeded = true; }
                 if (typeof userData.lastCheckInDate === 'undefined') { updateData.lastCheckInDate = null; userData.lastCheckInDate = null; updatesNeeded = true; }
@@ -523,7 +545,6 @@
             document.getElementById('profile-email').textContent = userData.email || 'No Email';
             document.getElementById('referral-code').textContent = userData.referralCode || '...';
             
-            // Apply Dynamic Admin Configurations to UI texts
             document.getElementById('min-withdrawal-info').textContent = `${appConfig.minWithdrawal} Coins`;
             document.getElementById('coin-value-info').textContent = `${appConfig.coinValueCoins} = ₹${appConfig.coinValueInr}`;
             
@@ -536,13 +557,12 @@
             const methodSelect = document.getElementById('withdraw-method'); methodSelect.innerHTML = '';
             (appConfig.paymentMethods ||[]).forEach(m => { const opt = document.createElement('option'); opt.value = m; opt.textContent = m; methodSelect.appendChild(opt); });
             updateDynamicPaymentFields();
-            updateTasksUI(); // Initial task setup
+            updateTasksUI(); 
         }
 
-        // --- LIVE COOLDOWN TIMER SYSTEM ---
         function startCooldownTimers() {
             if(timerInterval) clearInterval(timerInterval);
-            timerInterval = setInterval(updateTasksUI, 1000); // Check every second
+            timerInterval = setInterval(updateTasksUI, 1000); 
         }
 
         function formatTime(ms) {
@@ -557,7 +577,6 @@
             const today = new Date().toISOString().split('T')[0];
             const now = Date.now();
             
-            // 1. Check-in (Daily logic)
             const btnCheckin = document.getElementById('btn-checkin');
             if (userData.lastCheckInDate === today) {
                 btnCheckin.textContent = 'Claimed';
@@ -567,7 +586,6 @@
                 btnCheckin.className = "px-5 py-2 rounded-lg text-sm font-bold btn-neon";
             }
             
-            // 2. Math Quiz
             const mathLimit = appConfig.dailyMathLimit || 10;
             const mathLeft = Math.max(0, mathLimit - (userData.dailyMathCount || 0));
             document.getElementById('math-left-count').textContent = mathLeft;
@@ -587,7 +605,6 @@
                 btnMath.className = "px-5 py-2 rounded-lg text-sm font-bold btn-neon";
             }
 
-            // 3. Watch Ad
             const adLimit = appConfig.dailyAdLimit || 10;
             const adsLeft = Math.max(0, adLimit - (userData.dailyAdCount || 0));
             document.getElementById('ads-left-count').textContent = adsLeft;
@@ -608,8 +625,6 @@
             }
         }
 
-        // ====== STRICT AD TASKS LOGIC ======
-        
         window.handleCheckIn = async function() {
             const today = new Date().toISOString().split('T')[0];
             if (userData.lastCheckInDate === today) return showAlert("You have already claimed today's reward!");
@@ -617,9 +632,7 @@
             
             loader.style.display = 'flex';
             try {
-                // STRICT AD REQUIREMENT
                 await window.show_9391539();
-                
                 await updateDoc(doc(db, "users", currentUser.uid), { lastCheckInDate: today });
                 userData.lastCheckInDate = today;
                 await updateBalance(appConfig.checkinReward || 50);
@@ -653,14 +666,12 @@
             if(ansInput === "") return showAlert("Please enter an answer!");
             
             if (parseInt(ansInput) === currentMathAnswer) {
-                closeMathQuiz(); // Hide modal before showing ad
+                closeMathQuiz();
                 if (typeof window.show_9391539 !== 'function') return showAlert("Ad service is unavailable. Try again later.");
                 
                 loader.style.display = 'flex';
                 try {
-                    // STRICT AD REQUIREMENT
                     await window.show_9391539();
-                    
                     const newCount = (userData.dailyMathCount || 0) + 1;
                     const cTime = Date.now();
                     await updateDoc(doc(db, "users", currentUser.uid), { dailyMathCount: newCount, lastMathTime: cTime });
@@ -689,9 +700,7 @@
             
             loader.style.display = 'flex';
             try {
-                // STRICT AD REQUIREMENT
                 await window.show_9391539();
-                
                 const newCount = (userData.dailyAdCount || 0) + 1;
                 const cTime = Date.now();
                 await updateDoc(doc(db, "users", currentUser.uid), { dailyAdCount: newCount, lastAdTime: cTime });
@@ -706,7 +715,6 @@
             loader.style.display = 'none';
         }
         
-        // ====== REFERRAL SYSTEM ======
         async function handleApplyReferralCode() {
             if (userData.referredBy) return showAlert("You have already used a referral code.");
             const code = document.getElementById('enter-referral-code').value.trim().toUpperCase();
@@ -729,7 +737,6 @@
             document.getElementById('enter-referral-code').value = ''; loader.style.display = 'none';
         }
 
-        // Remaining setup events and core logic
         function updateDynamicPaymentFields() {
             const sel = document.getElementById('withdraw-method'); if(!sel || !sel.value) return;
             const method = sel.value.toLowerCase(); let ph = "Enter Payment Details";
@@ -758,7 +765,27 @@
             document.querySelectorAll('.nav-link').forEach(l => { l.addEventListener('click', (e) => { e.preventDefault(); if (l.dataset.page === 'wallet-page') loadWithdrawalHistory(); navigateTo(l.dataset.page); }); });
             document.getElementById('notification-bell').addEventListener('click', () => { navigateTo('notifications-page'); loadNotifications(); });
             document.getElementById('copy-code-btn').addEventListener('click', () => { const txt = document.getElementById('referral-code').textContent; if (navigator.clipboard) { navigator.clipboard.writeText(txt).then(() => showAlert("Copied!")); } else { const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); showAlert("Copied!"); } });
-            document.getElementById('share-btn').addEventListener('click', () => { const txt = `Join Reward Zoo & get ${appConfig.referralBonus} Coins! Code: ${userData.referralCode}`; if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) { window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(txt)}`); } else if (navigator.share) { navigator.share({ title: 'Reward Zoo!', text: txt, url: window.location.href }); } });
+            
+            // --- UPDATED SHARE BUTTON (PERFECT TELEGRAM MINI APP LINK) ---
+            document.getElementById('share-btn').addEventListener('click', () => { 
+                // *** IMPORTANT: Change "YOUR_BOT_USERNAME/app" to your real bot username & app shortname! ***
+                const botAppUrl = "YOUR_BOT_USERNAME/app"; 
+                const refLink = `https://t.me/${botAppUrl}?startapp=${userData.referralCode}`;
+                const txt = `🦁 Join Reward Zoo & get ${appConfig.referralBonus} Coins instantly!\n\nUse my invite link to start earning:`; 
+                
+                const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+                if (tg && tg.openTelegramLink) { 
+                    tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(txt)}`); 
+                } else if (navigator.share) { 
+                    navigator.share({ title: 'Reward Zoo!', text: txt, url: refLink }); 
+                } else {
+                    const fallbackText = `${txt} \n${refLink}`;
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(fallbackText).then(() => showAlert("Invite link copied to clipboard!"));
+                    }
+                }
+            });
+
             document.getElementById('apply-referral-btn').addEventListener('click', handleApplyReferralCode);
             document.getElementById('withdraw-btn').addEventListener('click', async () => {
                 const a = parseInt(document.getElementById('withdraw-amount').value), m = document.getElementById('withdraw-method').value, inp = document.getElementById('payment-detail-input'); const det = inp ? inp.value.trim() : ''; const min = appConfig.minWithdrawal || 5000;
@@ -778,4 +805,4 @@
         window.showAlert = showAlert;
     </script>
 </body>
-  </html>
+</html>
