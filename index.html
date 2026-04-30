@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>MathBattle span-x-4title>
+    <title>MathBattle Arena</title>
     
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -144,9 +144,9 @@
     <!-- Authentication Section -->
     <div id="auth-section" class="min-h-screen p-6 flex-col justify-center main-page">
         <div class="text-center mb-10">
-            <span class="text-7xl mb-4 block drop-shadow-[0_0_15px_rgba(217,70,239,0.5)]">🦁</span>
-            <h1 class="text-4xl text-neon tracking-tight">Reward Zoo</h1>
-            <p class="text-gray-400 mt-2 text-sm font-medium">Complete tasks to earn premium rewards</p>
+            <span class="text-7xl mb-4 block drop-shadow-[0_0_15px_rgba(217,70,239,0.5)]">⚔️</span>
+            <h1 class="text-4xl text-neon tracking-tight">MathBattle Arena</h1>
+            <p class="text-gray-400 mt-2 text-sm font-medium">Solve Maths to earn premium rewards</p>
         </div>
         
         <div id="auth-container">
@@ -185,7 +185,7 @@
     <div id="app-container" class="min-h-screen flex-col main-page">
         <!-- Header -->
         <header class="flex items-center justify-between p-4 sticky top-0 glass-header z-10">
-            <h1 class="text-xl font-bold flex items-center gap-2 text-neon"><span class="text-2xl drop-shadow-md">⚔️</span>MathBattle Arena</h1>
+            <h1 class="text-xl font-bold flex items-center gap-2 text-neon"><span class="text-2xl drop-shadow-md">🦁</span> Reward Zoo</h1>
             <div class="flex items-center space-x-4">
                 <div id="notification-bell" class="relative cursor-pointer transition p-2 rounded-full hover:bg-white/10">
                     <i data-lucide="bell" class="w-5 h-5"></i>
@@ -484,17 +484,17 @@
                 const snap = await getDoc(configRef);
                 const data = snap.exists() ? snap.data() : {};
                 appConfig = {
-                    minWithdrawal: data.minWithdrawal || 5000, 
-                    paymentMethods: data.paymentMethods || ["UPI", "Paytm"], 
-                    coinValueCoins: data.coinValueCoins || 1000, 
-                    coinValueInr: data.coinValueInr || 10,
-                    dailyAdLimit: data.dailyAdLimit || 10,
-                    dailyMathLimit: data.dailyMathLimit || 10,
+                    minWithdrawal: data.minWithdrawal || 3000, 
+                    paymentMethods: data.paymentMethods || ["Binance", "Paypal"], 
+                    coinValueCoins: data.coinValueCoins || 3000, 
+                    coinValueUsd: data.coinValueUsd || 1,
+                    dailyAdLimit: data.dailyAdLimit || 5,
+                    dailyMathLimit: data.dailyMathLimit || 40,
                     adCooldown: data.adCooldown || 60, 
                     mathCooldown: data.mathCooldown || 60, 
                     checkinReward: data.checkinReward || 50,
-                    adReward: data.adReward || 50,
-                    mathReward: data.mathReward || 10,
+                    adReward: data.adReward || 10,
+                    mathReward: data.mathReward || 30,
                     referralBonus: data.referralBonus || 100
                 };
             } catch (e) { console.error("Config Error:", e); }
@@ -769,15 +769,15 @@
             // --- UPDATED SHARE BUTTON (PERFECT TELEGRAM MINI APP LINK) ---
             document.getElementById('share-btn').addEventListener('click', () => { 
                 // *** IMPORTANT: Change "YOUR_BOT_USERNAME/app" to your real bot username & app shortname! ***
-                const botAppUrl = "YOUR_BOT_USERNAME/app"; 
+                const botAppUrl = "MathBattleArenaBot/app"; 
                 const refLink = `https://t.me/${botAppUrl}?startapp=${userData.referralCode}`;
-                const txt = `🦁 Join Reward Zoo & get ${appConfig.referralBonus} Coins instantly!\n\nUse my invite link to start earning:`; 
+                const txt = `⚔️ Join MathBattle Arena & get ${appConfig.referralBonus} Coins instantly!\n\nUse my invite link to start earning:`; 
                 
                 const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
                 if (tg && tg.openTelegramLink) { 
                     tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(refLink)}&text=${encodeURIComponent(txt)}`); 
                 } else if (navigator.share) { 
-                    navigator.share({ title: 'Reward Zoo!', text: txt, url: refLink }); 
+                    navigator.share({ title: 'MathBattle Arena!', text: txt, url: refLink }); 
                 } else {
                     const fallbackText = `${txt} \n${refLink}`;
                     if (navigator.clipboard) {
@@ -788,7 +788,7 @@
 
             document.getElementById('apply-referral-btn').addEventListener('click', handleApplyReferralCode);
             document.getElementById('withdraw-btn').addEventListener('click', async () => {
-                const a = parseInt(document.getElementById('withdraw-amount').value), m = document.getElementById('withdraw-method').value, inp = document.getElementById('payment-detail-input'); const det = inp ? inp.value.trim() : ''; const min = appConfig.minWithdrawal || 5000;
+                const a = parseInt(document.getElementById('withdraw-amount').value), m = document.getElementById('withdraw-method').value, inp = document.getElementById('payment-detail-input'); const det = inp ? inp.value.trim() : ''; const min = appConfig.minWithdrawal || 3000;
                 if (!a || a <= 0) return showAlert("Invalid amount."); if (a < min) return showAlert(`Minimum withdrawal is ${min} coins.`); if (a > userData.balance) return showAlert("Insufficient balance."); if (!det) return showAlert("Enter payment details.");
                 loader.style.display = 'flex';
                 try { await updateBalance(-a); await addDoc(collection(db, "withdrawals"), { userId: currentUser.uid, userName: userData.name, userEmail: userData.email, amount: a, method: m, paymentDetail: det, status: "pending", requestedAt: serverTimestamp() }); showAlert("Request submitted successfully!"); document.getElementById('withdraw-amount').value = ''; if(inp) inp.value = ''; } catch (err) { showAlert("Error: " + err.message); await updateBalance(a); } loader.style.display = 'none';
@@ -805,4 +805,4 @@
         window.showAlert = showAlert;
     </script>
 </body>
-</html>
+        </html>
