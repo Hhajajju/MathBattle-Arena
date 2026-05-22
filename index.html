@@ -9,7 +9,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
     <!-- Your Ad Code -->
-    <script src='//libtl.com/sdk.js' data-zone='9391539' data-sdk='show_9391539'></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -405,7 +405,9 @@
         let userData = null;
         let appConfig = {};
         let currentMathAnswer = 0;
-        let timerInterval = null;
+        const AdController = window.Adsgram.init({
+  blockId: "YOUR_BLOCK_ID"
+});
 
         const loader = document.getElementById('loader');
 
@@ -613,12 +615,14 @@
         window.handleCheckIn = async function() {
             const today = new Date().toISOString().split('T')[0];
             if (userData.lastCheckInDate === today) return showAlert("You have already claimed today's reward!");
-            if (typeof window.show_9391539 !== 'function') return showAlert("Ad service is unavailable. Try again later.");
+            if (!window.Adsgram) {
+    return showAlert("Ad service unavailable.");
+}
             
             loader.style.display = 'flex';
             try {
                 // STRICT AD REQUIREMENT
-                await window.show_9391539();
+                await AdController.show();
                 
                 await updateDoc(doc(db, "users", currentUser.uid), { lastCheckInDate: today });
                 userData.lastCheckInDate = today;
@@ -654,12 +658,14 @@
             
             if (parseInt(ansInput) === currentMathAnswer) {
                 closeMathQuiz(); // Hide modal before showing ad
-                if (typeof window.show_9391539 !== 'function') return showAlert("Ad service is unavailable. Try again later.");
+                if (!window.Adsgram) {
+    return showAlert("Ad service unavailable.");
+}
                 
                 loader.style.display = 'flex';
                 try {
                     // STRICT AD REQUIREMENT
-                    await window.show_9391539();
+                    await AdController.show();
                     
                     const newCount = (userData.dailyMathCount || 0) + 1;
                     const cTime = Date.now();
@@ -685,12 +691,14 @@
             if (userData.dailyAdCount >= (appConfig.dailyAdLimit || 10)) return showAlert("Daily ad limit reached! Come back tomorrow.");
             if (now - (userData.lastAdTime || 0) < adCooldownMs) return;
 
-            if (typeof window.show_9391539 !== 'function') return showAlert("Ad service is unavailable. Try again later.");
+            if (!window.Adsgram) {
+    return showAlert("Ad service unavailable.");
+}
             
             loader.style.display = 'flex';
             try {
                 // STRICT AD REQUIREMENT
-                await window.show_9391539();
+                await AdController.show();
                 
                 const newCount = (userData.dailyAdCount || 0) + 1;
                 const cTime = Date.now();
