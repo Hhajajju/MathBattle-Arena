@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>MathBattle Arena</title>
+    <title>Multi Game World</title>
     
     <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -185,7 +185,7 @@
     <div id="app-container" class="min-h-screen flex-col main-page">
         <!-- Header -->
         <header class="flex items-center justify-between p-4 sticky top-0 glass-header z-10">
-            <h1 class="text-xl font-bold flex items-center gap-2 text-neon"><span class="text-2xl drop-shadow-md">⚔️</span> MathBattle Arena</h1>
+            <h1 class="text-xl font-bold flex items-center gap-2 text-neon"><span class="text-2xl drop-shadow-md">🚀</span> Multi Game World</h1>
             <div class="flex items-center space-x-4">
                 <div id="notification-bell" class="relative cursor-pointer transition p-2 rounded-full hover:bg-white/10">
                     <i data-lucide="bell" class="w-5 h-5"></i>
@@ -319,10 +319,6 @@
                     <h2 id="profile-name" class="text-2xl font-bold text-white">User Name</h2>
                     <p id="profile-email" class="text-sm text-gray-400 mt-1">user@email.com</p>
                     
-                    <div class="w-full mt-8 pt-6 border-t border-white/10 z-10">
-                        <button id="logout-btn" class="w-full py-3.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 font-bold flex items-center justify-center gap-2 transition">
-                            <i data-lucide="log-out" class="w-5 h-5"></i> Secure Log Out
-                        </button>
                     </div>
                 </div>
             </div>
@@ -461,19 +457,19 @@
                 const data = snap.exists() ? snap.data() : {};
                 // Admin controlled settings with default fallbacks
                 appConfig = {
-                    minWithdrawal: data.minWithdrawal || 5000, 
-                    paymentMethods: data.paymentMethods || ["UPI", "Paytm"], 
-                    coinValueCoins: data.coinValueCoins || 1000, 
-                    coinValueInr: data.coinValueInr || 10,
+                    minWithdrawal: data.minWithdrawal || 4000, 
+                    paymentMethods: data.paymentMethods || ["USDT", "TON"], 
+                    coinValueCoins: data.coinValueCoins || 2000, 
+                    coinValueUsd: data.coinValueUsd || 1,
                     
                     // Controlled by Admin (COOLDOWNS IN SECONDS)
                     dailyAdLimit: data.dailyAdLimit || 10,
-                    dailyMathLimit: data.dailyMathLimit || 10,
-                    adCooldown: data.adCooldown || 60, // SECONDS
-                    mathCooldown: data.mathCooldown || 60, // SECONDS
-                    checkinReward: data.checkinReward || 50,
-                    adReward: data.adReward || 50,
-                    mathReward: data.mathReward || 10,
+                    dailyMathLimit: data.dailyMathLimit || 50,
+                    adCooldown: data.adCooldown || 30, // SECONDS
+                    mathCooldown: data.mathCooldown || 30, // SECONDS
+                    checkinReward: data.checkinReward || 30,
+                    adReward: data.adReward || 10,
+                    mathReward: data.mathReward || 20,
                     referralBonus: data.referralBonus || 100
                 };
             } catch (e) { console.error("Config Error:", e); }
